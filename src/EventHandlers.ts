@@ -1,18 +1,14 @@
-import { AppRegistry, App } from "generated";
+import { AppRegistry, AppContract } from "generated";
 import {
   getAppInfo,
   getAppMetadataIPFSHash,
   getCollaboratorKeys,
   getFileByFileId,
 } from "./effects";
-import { keccak256, stringToBytes } from "viem";
+import { keccak256, stringToBytes, toHex } from "viem";
+import { combinedId } from "./utils";
 
 const APP_REGISTRY_ADDRESS = process.env.ENVIO_APP_REGISTRY_ADDRESS as string;
-
-AppRegistry.Mint.contractRegister(async ({ event, context }) => {
-  const appAddress = event.params.app;
-  context.addApp(appAddress);
-});
 
 AppRegistry.Mint.handler(async ({ event, context }) => {
   const appAddress = event.params.app;
@@ -74,7 +70,12 @@ AppRegistry.Mint.handler(async ({ event, context }) => {
   });
 });
 
-App.UpdatedAppMetadata.handler(async ({ event, context }) => {
+AppRegistry.Mint.contractRegister(async ({ event, context }) => {
+  const appAddress = event.params.app;
+  context.addAppContract(appAddress);
+});
+
+AppContract.UpdatedAppMetadata.handler(async ({ event, context }) => {
   const metadataIPFSHash = event.params.metadataIPFSHash;
   const by = event.params.by;
   const appAddress = event.srcAddress;
@@ -96,7 +97,7 @@ App.UpdatedAppMetadata.handler(async ({ event, context }) => {
     tokenId: tokenId as bigint,
     transactionHash: event.transaction.hash as string,
     owner: by as string,
-    id: `${event.chainId}-${event.transaction.hash}-${event.logIndex}`,
+    id: combinedId(event.transaction.hash as string, event.logIndex),
   });
 
   if (currentApp) {
@@ -110,7 +111,7 @@ App.UpdatedAppMetadata.handler(async ({ event, context }) => {
   }
 });
 
-App.OwnershipTransferStarted.handler(async ({ event, context }) => {
+AppContract.OwnershipTransferStarted.handler(async ({ event, context }) => {
   const previousOwner = event.params.previousOwner;
   const newOwner = event.params.newOwner;
   const appAddress = event.srcAddress;
@@ -131,7 +132,7 @@ App.OwnershipTransferStarted.handler(async ({ event, context }) => {
     by: previousOwner as string,
     eventType: "OwnershipTransferStarted",
     transactionHash: event.transaction.hash as string,
-    id: `${event.chainId}-${event.transaction.hash}-${event.logIndex}`,
+    id: combinedId(event.transaction.hash as string, event.logIndex),
     metadataIPFSHash: metadataIPFSHash as string,
     owner: newOwner as string,
     registryAddress: registryAddress as string,
@@ -149,7 +150,7 @@ App.OwnershipTransferStarted.handler(async ({ event, context }) => {
   }
 });
 
-App.OwnershipTransferred.handler(async ({ event, context }) => {
+AppContract.OwnershipTransferred.handler(async ({ event, context }) => {
   const previousOwner = event.params.previousOwner;
   const newOwner = event.params.newOwner;
   const appAddress = event.srcAddress;
@@ -186,18 +187,20 @@ App.OwnershipTransferred.handler(async ({ event, context }) => {
   }
 });
 
-App.AddedFile.handler(async ({ event, context }) => {
+AppContract.AddedFile.handler(async ({ event, context }) => {
   const fileId = event.params.fileId;
-  const rawAppFileId = event.params.rawAppFileId;
+  const appFileId = event.params.appFileId;
   const fileType = event.params.fileType;
   const metadataIPFSHash = event.params.metadataIPFSHash;
   const contentIPFSHash = event.params.contentIPFSHash;
   const gateIPFSHash = event.params.gateIPFSHash;
-  const tokenId = event.params.tokenId;
   const by = event.params.by;
 
   const currentApp = await context.App.get(event.srcAddress);
   const registryAddress = currentApp?.registryAddress || APP_REGISTRY_ADDRESS;
+  const tokenId = currentApp
+    ? currentApp.tokenId
+    : (await context.effect(getAppInfo, event.srcAddress)).tokenId;
 
   context.FileEvent.set({
     appAddress: event.srcAddress,
@@ -206,21 +209,21 @@ App.AddedFile.handler(async ({ event, context }) => {
     by: by,
     eventType: "AddedFile",
     fileId: fileId as bigint,
-    rawAppFileId: rawAppFileId,
+    rawAppFileId: appFileId,
     fileType: fileType.toString(),
     metadataIPFSHash: metadataIPFSHash,
     contentIPFSHash: contentIPFSHash,
     gateIPFSHash: gateIPFSHash,
-    tokenId: tokenId,
+    tokenId: tokenId as bigint,
     transactionHash: event.transaction.hash,
-    id: `${event.chainId}-${event.transaction.hash}-${event.logIndex}`,
-    appFileId: keccak256(stringToBytes(rawAppFileId)),
+    id: combinedId(event.transaction.hash as string, event.logIndex),
+    appFileId: keccak256(stringToBytes(appFileId)),
     registryAddress: registryAddress,
   });
 
   context.File.set({
     appAddress: event.srcAddress,
-    appFileId: keccak256(stringToBytes(rawAppFileId)),
+    appFileId: keccak256(stringToBytes(appFileId)),
     by: by,
     contentIPFSHash: contentIPFSHash,
     editedBy: by,
@@ -228,9 +231,9 @@ App.AddedFile.handler(async ({ event, context }) => {
     fileType: fileType.toString(),
     gateIPFSHash: gateIPFSHash,
     metadataIPFSHash: metadataIPFSHash,
-    rawAppFileId: rawAppFileId,
+    rawAppFileId: appFileId,
     registryAddress: registryAddress as string,
-    tokenId: tokenId,
+    tokenId: tokenId as bigint,
     lastTransactionBlockNumber: BigInt(event.block.number),
     lastTransactionBlockTimestamp: BigInt(event.block.timestamp),
     lastTransactionHash: event.transaction.hash,
@@ -239,18 +242,20 @@ App.AddedFile.handler(async ({ event, context }) => {
   });
 });
 
-App.EditedFile.handler(async ({ event, context }) => {
+AppContract.EditedFile.handler(async ({ event, context }) => {
   const fileId = event.params.fileId;
-  const rawAppFileId = event.params.rawAppFileId;
+  const appFileId = event.params.appFileId;
   const fileType = event.params.fileType;
   const metadataIPFSHash = event.params.metadataIPFSHash;
   const contentIPFSHash = event.params.contentIPFSHash;
   const gateIPFSHash = event.params.gateIPFSHash;
-  const tokenId = event.params.tokenId;
   const by = event.params.by;
 
   const currentApp = await context.App.get(event.srcAddress);
   const registryAddress = currentApp?.registryAddress || APP_REGISTRY_ADDRESS;
+  const tokenId = currentApp
+    ? currentApp.tokenId
+    : (await context.effect(getAppInfo, event.srcAddress)).tokenId;
 
   context.FileEvent.set({
     appAddress: event.srcAddress,
@@ -259,15 +264,15 @@ App.EditedFile.handler(async ({ event, context }) => {
     by: by,
     eventType: "EditedFile",
     fileId: fileId,
-    rawAppFileId: rawAppFileId,
+    rawAppFileId: appFileId,
     fileType: fileType.toString(),
     metadataIPFSHash: metadataIPFSHash,
     contentIPFSHash: contentIPFSHash,
     gateIPFSHash: gateIPFSHash,
-    tokenId: tokenId,
+    tokenId: tokenId as bigint,
     transactionHash: event.transaction.hash,
-    id: `${event.chainId}-${event.transaction.hash}-${event.logIndex}`,
-    appFileId: keccak256(stringToBytes(rawAppFileId)),
+    id: combinedId(event.transaction.hash as string, event.logIndex),
+    appFileId: keccak256(stringToBytes(appFileId)),
     registryAddress: registryAddress,
   });
 
@@ -287,9 +292,9 @@ App.EditedFile.handler(async ({ event, context }) => {
   }
 });
 
-App.DeletedFile.handler(async ({ event, context }) => {
+AppContract.DeletedFile.handler(async ({ event, context }) => {
   const fileId = event.params.fileId;
-  const rawAppFileId = event.params.rawAppFileId;
+  const appFileId = event.params.appFileId;
   const by = event.params.by;
   const appAddress = event.srcAddress;
   const app = await context.App.get(appAddress);
@@ -302,7 +307,6 @@ App.DeletedFile.handler(async ({ event, context }) => {
     fileId: fileId,
     appAddress: appAddress,
   });
-  // const fileEventEntity = await context.FileEvent.get(fileId.toString());
 
   const fileType = file.fileType?.toString() || "0";
 
@@ -313,15 +317,15 @@ App.DeletedFile.handler(async ({ event, context }) => {
     by: by,
     eventType: "DeletedFile",
     fileId: fileId,
-    rawAppFileId: rawAppFileId,
+    rawAppFileId: appFileId,
     fileType: fileType,
     metadataIPFSHash: file.metadataIPFSHash,
     contentIPFSHash: file.contentIPFSHash,
     gateIPFSHash: file.gateIPFSHash,
     tokenId: tokenId as bigint,
     transactionHash: event.transaction.hash,
-    id: `${event.chainId}-${event.transaction.hash}-${event.logIndex}`,
-    appFileId: keccak256(stringToBytes(rawAppFileId)),
+    id: combinedId(event.transaction.hash as string, event.logIndex),
+    appFileId: keccak256(stringToBytes(appFileId)),
     registryAddress: registryAddress as string,
   });
 
@@ -339,7 +343,7 @@ App.DeletedFile.handler(async ({ event, context }) => {
   }
 });
 
-App.AddedCollaborator.handler(async ({ event, context }) => {
+AppContract.AddedCollaborator.handler(async ({ event, context }) => {
   const account = event.params.account;
   const by = event.params.by;
   const appAddress = event.srcAddress;
@@ -384,7 +388,7 @@ App.AddedCollaborator.handler(async ({ event, context }) => {
   });
 });
 
-App.RegisteredCollaboratorKeys.handler(async ({ event, context }) => {
+AppContract.RegisteredCollaboratorKeys.handler(async ({ event, context }) => {
   const account = event.params.account;
   const did = event.params.did;
   const appAddress = event.srcAddress;
@@ -421,7 +425,7 @@ App.RegisteredCollaboratorKeys.handler(async ({ event, context }) => {
   }
 });
 
-App.RemovedCollaboratorKeys.handler(async ({ event, context }) => {
+AppContract.RemovedCollaboratorKeys.handler(async ({ event, context }) => {
   const account = event.params.account;
 
   const appAddress = event.srcAddress;
@@ -457,7 +461,7 @@ App.RemovedCollaboratorKeys.handler(async ({ event, context }) => {
   }
 });
 
-App.RemovedCollaborator.handler(async ({ event, context }) => {
+AppContract.RemovedCollaborator.handler(async ({ event, context }) => {
   const account = event.params.account;
   const by = event.params.by;
   const appAddress = event.srcAddress;

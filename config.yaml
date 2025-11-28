@@ -1,5 +1,4 @@
 name: fileverse-apps-indexer
-raw_events: true
 preload_handlers: true
 networks:
   - id: 100
@@ -14,7 +13,7 @@ networks:
             field_selection:
               transaction_fields:
                 - hash
-      - name: App
+      - name: AppContract
         abi_file_path: ./abis/App.json
         handler: src/EventHandlers.ts
         events:
@@ -30,15 +29,15 @@ networks:
             field_selection:
               transaction_fields:
                 - hash
-          - event: AddedFile(uint256 indexed fileId,string rawAppFileId,uint8 fileType,string metadataIPFSHash,string contentIPFSHash,string gateIPFSHash,uint256 indexed tokenId,address indexed by)
+          - event: AddedFile(uint256 indexed fileId,string appFileId,uint8 fileType,string metadataIPFSHash,string contentIPFSHash,string gateIPFSHash,uint256 version,address indexed by)
             field_selection:
               transaction_fields:
                 - hash
-          - event: EditedFile(uint256 indexed fileId,string rawAppFileId,uint8 fileType,string metadataIPFSHash,string contentIPFSHash,string gateIPFSHash,uint256 indexed tokenId,address indexed by)
+          - event: EditedFile(uint256 indexed fileId,string appFileId,uint8 fileType,string metadataIPFSHash,string contentIPFSHash,string gateIPFSHash,uint256 version,address indexed by)
             field_selection:
               transaction_fields:
                 - hash
-          - event: DeletedFile(uint256 indexed fileId,string rawAppFileId,address indexed by)
+          - event: DeletedFile(uint256 indexed fileId,string appFileId,address indexed by)
             field_selection:
               transaction_fields:
                 - hash

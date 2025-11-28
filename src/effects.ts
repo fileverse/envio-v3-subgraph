@@ -3,6 +3,8 @@ import { createPublicClient, fallback, http, zeroAddress } from "viem";
 import { gnosis } from "viem/chains";
 import AppABI from "../abis/App.json";
 import AppRegistryABI from "../abis/AppRegistry.json";
+import { retryOnError } from "./utils";
+import { OnChainAppInfo, OnChainFile } from "./type";
 
 const publicClient = createPublicClient({
   chain: gnosis,
@@ -21,14 +23,21 @@ export const getAppMetadataIPFSHash = createEffect(
     rateLimit: false,
     cache: true,
   },
-  async ({ input: appAddress }) => {
-    const appMetadata = (await publicClient.readContract({
-      address: appAddress as `0x${string}`,
-      abi: AppABI,
-      functionName: "metadataIPFSHash",
-    })) as string;
+  async ({ input: appAddress, context }) => {
+    try {
+      const appMetadata = (await publicClient.readContract({
+        address: appAddress as `0x${string}`,
+        abi: AppABI,
+        functionName: "metadataIPFSHash",
+      })) as string;
 
-    return appMetadata;
+      return appMetadata;
+    } catch (error) {
+      context.log.error(
+        `Error getting app metadata IPFSHash for ${appAddress}: ${error}`
+      );
+      return "";
+    }
   }
 );
 
@@ -43,15 +52,22 @@ export const getCollaboratorKeys = createEffect(
     rateLimit: false,
     cache: true,
   },
-  async ({ input: { appAddress, account } }) => {
-    const collaboratorKeys = (await publicClient.readContract({
-      address: appAddress as `0x${string}`,
-      abi: AppABI,
-      functionName: "collaboratorKeys",
-      args: [account as `0x${string}`],
-    })) as string;
+  async ({ input: { appAddress, account }, context }) => {
+    try {
+      const collaboratorKeys = (await publicClient.readContract({
+        address: appAddress as `0x${string}`,
+        abi: AppABI,
+        functionName: "collaboratorKeys",
+        args: [account as `0x${string}`],
+      })) as string;
 
-    return collaboratorKeys;
+      return collaboratorKeys;
+    } catch (error) {
+      context.log.error(
+        `Error getting collaborator keys for ${appAddress} and ${account}: ${error}`
+      );
+      return "";
+    }
   }
 );
 
@@ -72,23 +88,21 @@ export const getFileByFileId = createEffect(
       owner: S.string,
     },
     rateLimit: false,
-    cache: true,
+    cache: false,
   },
   async ({ input: { fileId, appAddress }, context }) => {
-    const values = (await publicClient.readContract({
-      address: appAddress as `0x${string}`,
-      abi: AppABI,
-      functionName: "files",
-      args: [fileId],
-    })) as {
-      appFileId: string;
-      fileType: number;
-      metadataIPFSHash: string;
-      contentIPFSHash: string;
-      gateIPFSHash: string;
-      version: bigint;
-      owner: string;
-    };
+    const values = (await retryOnError(
+      async () => {
+        return await publicClient.readContract({
+          address: appAddress as `0x${string}`,
+          abi: AppABI,
+          functionName: "files",
+          args: [fileId],
+        });
+      },
+      { maxAttempts: 3, delayMs: 1000 },
+      context
+    )) as OnChainFile;
 
     return {
       appFileId: values?.appFileId || "appFileId",
@@ -116,17 +130,18 @@ export const getAppInfo = createEffect(
     cache: true,
   },
   async ({ input: appAddress, context }) => {
-    const { app, index, tokenId, owner } = (await publicClient.readContract({
-      address: "0xdb0def9f0992e68d7170e15c4788ff62a0210ca1",
-      abi: AppRegistryABI,
-      functionName: "appInfo",
-      args: [appAddress as `0x${string}`],
-    })) as {
-      app: string;
-      index: bigint;
-      tokenId: bigint;
-      owner: string;
-    };
+    const { app, index, tokenId, owner } = (await retryOnError(
+      async () => {
+        return await publicClient.readContract({
+          address: "0xdb0def9f0992e68d7170e15c4788ff62a0210ca1",
+          abi: AppRegistryABI,
+          functionName: "appInfo",
+          args: [appAddress as `0x${string}`],
+        });
+      },
+      { maxAttempts: 3, delayMs: 1000 },
+      context
+    )) as OnChainAppInfo;
 
     return {
       app,

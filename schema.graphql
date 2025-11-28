@@ -13,96 +13,96 @@ enum AppEventType {
 }
 
 type AppEvent {
-  id: Bytes!
-  by: Bytes! # address
-  appAddress: Bytes! # address
-  registryAddress: Bytes! # address
+  id: String!
+  by: String! # address
+  appAddress: String! # address
+  registryAddress: String! # address
   tokenId: BigInt!
   metadataIPFSHash: String # string
   blockNumber: BigInt!
   blockTimestamp: BigInt!
-  transactionHash: Bytes!
+  transactionHash: String!
   eventType: AppEventType! # string
-  owner: Bytes! # address
+  owner: String! # address
 }
 
 type CollaboratorEvent {
-  id: Bytes!
-  account: Bytes! # address
+  id: String!
+  account: String! # address
   did: String # string
-  by: Bytes! # address
-  appAddress: Bytes! # address
-  registryAddress: Bytes! # address
+  by: String! # address
+  appAddress: String! # address
+  registryAddress: String! # address
   tokenId: BigInt!
   blockNumber: BigInt!
   blockTimestamp: BigInt!
-  transactionHash: Bytes!
+  transactionHash: String!
   eventType: AppEventType! # string
 }
 
 type FileEvent {
-  id: Bytes!
+  id: String!
   appFileId: String! # string
   rawAppFileId: String # string
   fileId: BigInt! # uint256
-  metadataIPFSHash: String # string
-  contentIPFSHash: String # string
+  metadataIPFSHash: String! # string
+  contentIPFSHash: String! # string
   gateIPFSHash: String # string
-  by: Bytes! # address
+  by: String! # address
   blockNumber: BigInt!
   blockTimestamp: BigInt!
-  transactionHash: Bytes!
+  transactionHash: String!
   fileType: String! # string
   eventType: AppEventType! # string
-  appAddress: Bytes! # address
-  registryAddress: Bytes! # address
+  appAddress: String! # address
+  registryAddress: String! # address
   tokenId: BigInt!
 }
 
 type App {
-  id: Bytes!
-  appAddress: Bytes! # address
-  registryAddress: Bytes! # address
+  id: String!
+  appAddress: String! # address
+  registryAddress: String! # address
   tokenId: BigInt!
   metadataIPFSHash: String # string
-  owner: Bytes! # address
-  by: Bytes! # address
-  lastTransactionHash: Bytes!
+  owner: String! # address
+  by: String! # address
+  lastTransactionHash: String!
   lastTransactionBlockNumber: BigInt!
   lastTransactionBlockTimestamp: BigInt!
 }
 
 type Collaborator {
-  id: Bytes!
-  account: Bytes! # address
+  id: String!
+  account: String! # address
   did: String # string
-  by: Bytes! # address
+  by: String! # address
   isDeleted: Boolean!
-  deletedBy: Bytes # address
-  lastTransactionHash: Bytes!
+  deletedBy: String # address
+  lastTransactionHash: String!
   lastTransactionBlockNumber: BigInt!
   lastTransactionBlockTimestamp: BigInt!
-  appAddress: Bytes! # address
-  registryAddress: Bytes! # address
+  appAddress: String! # address
+  registryAddress: String! # address
   tokenId: BigInt!
 }
 
 type File {
-  id: Bytes!
+  id: String!
   fileId: BigInt! # uint256
   appFileId: String! # string
-  rawAppFileId: String # string
-  metadataIPFSHash: String # string
-  contentIPFSHash: String # string
+  rawAppFileId: String! # string
+  metadataIPFSHash: String! # string
+  contentIPFSHash: String! # string
   gateIPFSHash: String # string
   fileType: String! # string
-  appAddress: Bytes! # address
-  registryAddress: Bytes! # address
+  appAddress: String! # address
+  registryAddress: String! # address
   tokenId: BigInt!
-  by: Bytes! # address
-  editedBy: Bytes! # address
+  by: String! # address
+  editedBy: String! # address
   isDeleted: Boolean!
-  lastTransactionHash: Bytes!
+  lastTransactionHash: String!
   lastTransactionBlockNumber: BigInt!
   lastTransactionBlockTimestamp: BigInt!
 }
