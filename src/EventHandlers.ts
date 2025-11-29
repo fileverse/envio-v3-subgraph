@@ -5,7 +5,7 @@ import {
   getCollaboratorKeys,
   getFileByFileId,
 } from "./effects";
-import { keccak256, stringToBytes, toHex } from "viem";
+import { keccak256, stringToBytes } from "viem";
 import { combinedId } from "./utils";
 
 const APP_REGISTRY_ADDRESS = process.env.ENVIO_APP_REGISTRY_ADDRESS as string;

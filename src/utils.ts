@@ -8,6 +8,7 @@ const toI32Bytes = (num: number): string => {
   return toHex(new Uint8Array(buffer)).slice(2); // remove '0x' prefix
 };
 
+// converts the id similar to the the graph events
 export const combinedId = (
   transactionHash: string,
   logIndex: number
