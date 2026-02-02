@@ -133,7 +133,7 @@ export const getAppInfo = createEffect(
     const { app, index, tokenId, owner } = (await retryOnError(
       async () => {
         return await publicClient.readContract({
-          address: "0xdb0def9f0992e68d7170e15c4788ff62a0210ca1",
+          address: process.env.ENVIO_APP_REGISTRY_ADDRESS as `0x${string}`,
           abi: AppRegistryABI,
           functionName: "appInfo",
           args: [appAddress as `0x${string}`],

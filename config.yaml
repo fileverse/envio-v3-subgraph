@@ -1,12 +1,12 @@
 name: fileverse-apps-indexer
 preload_handlers: true
 networks:
-  - id: 100
-    start_block: 42309834
+  - id: 11155111
+    start_block: 10133994
     contracts:
       - name: AppRegistry
         abi_file_path: ./abis/AppRegistry.json
-        address: 0xdb0def9f0992e68d7170e15c4788ff62a0210ca1
+        address: 0xbE1133bcDDCa3058fe641eb10A115CE8B6632213
         handler: src/EventHandlers.ts
         events:
           - event: Mint(address indexed app,uint256 indexed tokenId,address indexed account)
