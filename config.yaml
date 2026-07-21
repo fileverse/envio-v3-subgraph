@@ -1,6 +1,5 @@
 name: fileverse-apps-indexer
-preload_handlers: true
-networks:
+chains:
   - id: 100
     start_block: 42309834
     contracts:
