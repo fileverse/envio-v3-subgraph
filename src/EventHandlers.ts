@@ -1,4 +1,4 @@
-import { AppRegistry, AppContract } from "generated";
+import { indexer, AppRegistry, AppContract } from "envio";
 import {
   getAppInfo,
   getAppMetadataIPFSHash,
@@ -10,7 +10,9 @@ import { combinedId } from "./utils";
 
 const APP_REGISTRY_ADDRESS = process.env.ENVIO_APP_REGISTRY_ADDRESS as string;
 
-AppRegistry.Mint.handler(async ({ event, context }) => {
+indexer.onEvent(
+  { contract: "AppRegistry", event: "Mint" },
+  async ({ event, context }) => {
   const appAddress = event.params.app;
   const tokenId = event.params.tokenId;
   const account = event.params.account;
@@ -68,14 +70,20 @@ AppRegistry.Mint.handler(async ({ event, context }) => {
     registryAddress: appRegistryAddress as string,
     tokenId: tokenId as bigint,
   });
-});
+}
+);
 
-AppRegistry.Mint.contractRegister(async ({ event, context }) => {
+indexer.contractRegister(
+  { contract: "AppRegistry", event: "Mint" },
+  async ({ event, context }) => {
   const appAddress = event.params.app;
-  context.addAppContract(appAddress);
-});
+  context.chain.AppContract.add(appAddress);
+}
+);
 
-AppContract.UpdatedAppMetadata.handler(async ({ event, context }) => {
+indexer.onEvent(
+  { contract: "AppContract", event: "UpdatedAppMetadata" },
+  async ({ event, context }) => {
   const metadataIPFSHash = event.params.metadataIPFSHash;
   const by = event.params.by;
   const appAddress = event.srcAddress;
@@ -109,9 +117,12 @@ AppContract.UpdatedAppMetadata.handler(async ({ event, context }) => {
       lastTransactionHash: event.transaction.hash as string,
     });
   }
-});
+}
+);
 
-AppContract.OwnershipTransferStarted.handler(async ({ event, context }) => {
+indexer.onEvent(
+  { contract: "AppContract", event: "OwnershipTransferStarted" },
+  async ({ event, context }) => {
   const previousOwner = event.params.previousOwner;
   const newOwner = event.params.newOwner;
   const appAddress = event.srcAddress;
@@ -148,9 +159,12 @@ AppContract.OwnershipTransferStarted.handler(async ({ event, context }) => {
       lastTransactionHash: event.transaction.hash as string,
     });
   }
-});
+}
+);
 
-AppContract.OwnershipTransferred.handler(async ({ event, context }) => {
+indexer.onEvent(
+  { contract: "AppContract", event: "OwnershipTransferred" },
+  async ({ event, context }) => {
   const previousOwner = event.params.previousOwner;
   const newOwner = event.params.newOwner;
   const appAddress = event.srcAddress;
@@ -185,9 +199,12 @@ AppContract.OwnershipTransferred.handler(async ({ event, context }) => {
       lastTransactionHash: event.transaction.hash as string,
     });
   }
-});
+}
+);
 
-AppContract.AddedFile.handler(async ({ event, context }) => {
+indexer.onEvent(
+  { contract: "AppContract", event: "AddedFile" },
+  async ({ event, context }) => {
   const fileId = event.params.fileId;
   const appFileId = event.params.appFileId;
   const fileType = event.params.fileType;
@@ -240,9 +257,12 @@ AppContract.AddedFile.handler(async ({ event, context }) => {
     id: event.params.fileId.toString(),
     isDeleted: false,
   });
-});
+}
+);
 
-AppContract.EditedFile.handler(async ({ event, context }) => {
+indexer.onEvent(
+  { contract: "AppContract", event: "EditedFile" },
+  async ({ event, context }) => {
   const fileId = event.params.fileId;
   const appFileId = event.params.appFileId;
   const fileType = event.params.fileType;
@@ -290,9 +310,12 @@ AppContract.EditedFile.handler(async ({ event, context }) => {
       fileType: fileType.toString(),
     });
   }
-});
+}
+);
 
-AppContract.DeletedFile.handler(async ({ event, context }) => {
+indexer.onEvent(
+  { contract: "AppContract", event: "DeletedFile" },
+  async ({ event, context }) => {
   const fileId = event.params.fileId;
   const appFileId = event.params.appFileId;
   const by = event.params.by;
@@ -341,9 +364,12 @@ AppContract.DeletedFile.handler(async ({ event, context }) => {
       editedBy: by,
     });
   }
-});
+}
+);
 
-AppContract.AddedCollaborator.handler(async ({ event, context }) => {
+indexer.onEvent(
+  { contract: "AppContract", event: "AddedCollaborator" },
+  async ({ event, context }) => {
   const account = event.params.account;
   const by = event.params.by;
   const appAddress = event.srcAddress;
@@ -386,9 +412,12 @@ AppContract.AddedCollaborator.handler(async ({ event, context }) => {
     registryAddress: registryAddress as string,
     tokenId: tokenId as bigint,
   });
-});
+}
+);
 
-AppContract.RegisteredCollaboratorKeys.handler(async ({ event, context }) => {
+indexer.onEvent(
+  { contract: "AppContract", event: "RegisteredCollaboratorKeys" },
+  async ({ event, context }) => {
   const account = event.params.account;
   const did = event.params.did;
   const appAddress = event.srcAddress;
@@ -423,9 +452,12 @@ AppContract.RegisteredCollaboratorKeys.handler(async ({ event, context }) => {
       lastTransactionHash: event.transaction.hash,
     });
   }
-});
+}
+);
 
-AppContract.RemovedCollaboratorKeys.handler(async ({ event, context }) => {
+indexer.onEvent(
+  { contract: "AppContract", event: "RemovedCollaboratorKeys" },
+  async ({ event, context }) => {
   const account = event.params.account;
 
   const appAddress = event.srcAddress;
@@ -459,9 +491,12 @@ AppContract.RemovedCollaboratorKeys.handler(async ({ event, context }) => {
       lastTransactionHash: event.transaction.hash,
     });
   }
-});
+}
+);
 
-AppContract.RemovedCollaborator.handler(async ({ event, context }) => {
+indexer.onEvent(
+  { contract: "AppContract", event: "RemovedCollaborator" },
+  async ({ event, context }) => {
   const account = event.params.account;
   const by = event.params.by;
   const appAddress = event.srcAddress;
@@ -497,4 +532,5 @@ AppContract.RemovedCollaborator.handler(async ({ event, context }) => {
       lastTransactionHash: event.transaction.hash,
     });
   }
-});
+}
+);
